@@ -1,5 +1,4 @@
 # Python SSH Tunnel Management Service
-# Crimson Development Services - 2016
 
 # Imports
 import subprocess, time
