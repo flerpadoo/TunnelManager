@@ -1,4 +1,5 @@
 # Python SSH Tunnel Management Service
+# Crimson Development Services - 2016
 
 # Imports
 import subprocess, time
@@ -21,10 +22,12 @@ class TunnelManager():
     # Default properties and values
     def __init__(self):
         self.connected = False
+        self.lastLogin = 'Never'
         self.currentHosts = []
         self.currentTunnels = []
         self.keepAliveInterval = 120
         self.activeConnections = []
+        self.baseCmd = ''
     # Output control module
     def printMsg(self, messageText, messageType):
         if outputEnabled is True:
@@ -42,7 +45,7 @@ class TunnelManager():
             sshProcess = subprocess.Popen(commandList, stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, bufsize=0)
             self.printMsg('Connected to SSH on host ' + SSH_DICT['ADDRESS'], 0)
             self.activeConnections.append(sshProcess)
-    # Sends a keepalive singal to each connected host
+    # Sends a keepalive signal to each connected host
     def keepAlive(self):
         while True:
             time.sleep(self.keepAliveInterval)
@@ -53,7 +56,6 @@ class TunnelManager():
 
 # Main module: runs the tunnel manager, then keepalive forever
 def main():
-    killAllSSH()
     print('\n')
     p = TunnelManager()
     p.initSSH()
