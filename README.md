@@ -21,3 +21,9 @@ CONFIG_SETTINGS = [
     }
 ]
 ```
+
+## Usage (IDLE and Command Line)
+
+    p = TunnelManager()
+    p.initSSH()
+    p.keepAlive()
