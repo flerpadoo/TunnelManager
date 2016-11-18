@@ -23,12 +23,10 @@ class TunnelManager():
     # Default properties and values
     def __init__(self):
         self.connected = False
-        self.lastLogin = 'Never'
         self.currentHosts = []
         self.currentTunnels = []
         self.keepAliveInterval = 120
         self.activeConnections = []
-        self.baseCmd = ''
     # Output control module
     def printMsg(self, messageText, messageType):
         if outputEnabled is True:
