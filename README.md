@@ -9,3 +9,15 @@ The configuration file for TunnelManager is really quite simple: It is merely a 
 + IDENTITY
 + TUNNELS
 
+TunnelManager uses this list of dictionaries, and connects to each of the host addresses using their respective username and identity files provided in the config file, and establishes the SSH tunnels you specify in the TUNNELS key. Here is an example of a config file with a single host and only a few tunnels:
+
+```python
+CONFIG_SETTINGS = [
+    {   # My Jumpbox
+        "ADDRESS": "jumpbox.yourdomain.com",
+        "USERNAME": "username",
+        "IDENTITY": "/home/username/.ssh/id_rsa",
+        "TUNNELS": ["-L2265:117.39.2.233:22", "-L2264:62.23.1.15:22", "-L2266:92.24.18.52:22", "-D8888"]
+    }
+]
+```
