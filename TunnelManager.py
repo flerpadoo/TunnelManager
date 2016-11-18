@@ -16,7 +16,6 @@ execfile(configFile)
 # Kills all SSH sessions, used for startup and keyboard interrupt (CTRL+C)
 def killAllSSH():
     subprocess.Popen(['killall', 'ssh'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, bufsize=0)
-    subprocess.Popen(['killall', 'python'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, bufsize=0)
 
 # SSH Tunnel Management Class
 class TunnelManager():
