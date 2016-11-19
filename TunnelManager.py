@@ -1,12 +1,16 @@
 # Python SSH Tunnel Management Service
 # Crimson Development Services - 2016
 
-# Imports
-import subprocess, time
+# You will need to install psutil. If it weren't for windows
+# it would be handled with an internal module. Thanks Bill.
 
-# Output settings
-outputEnabled = True
+# Imports
+import subprocess, time, psutil
+
+# Service management stuff
+outputEnabled = False
 verboseOutput = False
+production = True
 
 # Loads the config file
 CONFIG_SETTINGS = []
@@ -25,7 +29,7 @@ class TunnelManager():
         self.lastLogin = 'Never'
         self.currentHosts = []
         self.currentTunnels = []
-        self.keepAliveInterval = 120
+        self.keepAliveInterval = 30
         self.activeConnections = []
         self.baseCmd = ''
     # Output control module
@@ -37,33 +41,77 @@ class TunnelManager():
                 print('[!] ' + messageText + '\n')
     # Initializes an SSH connection for each host in the config file
     def initSSH(self):
+        connectionID = 0
         for SSH_DICT in CONFIG_SETTINGS:
-            commandList = ['ssh', '-N', '-i', SSH_DICT['IDENTITY'], SSH_DICT['USERNAME'] + '@' + SSH_DICT['ADDRESS']]
-            for tunnel in SSH_DICT['TUNNELS']:
+            connectionID = connectionID + 1
+            identity = SSH_DICT['IDENTITY']
+            username = SSH_DICT['USERNAME']
+            address = SSH_DICT['ADDRESS']
+            tunnels = SSH_DICT['TUNNELS']
+            commandList = ['ssh', '-N', '-i', identity, username + '@' + address]
+            for tunnel in tunnels:
                 commandList.append(tunnel)
-            self.printMsg('SSH Command for ' + SSH_DICT['ADDRESS'] + ': ' + str(commandList), 1)
+            self.printMsg('SSH Command for ' + address + ': ' + ' '.join(commandList), 1)
             sshProcess = subprocess.Popen(commandList, stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, bufsize=0)
-            self.printMsg('Connected to SSH on host ' + SSH_DICT['ADDRESS'], 0)
-            self.activeConnections.append(sshProcess)
+            self.printMsg('Connected to SSH on host ' + address, 0)
+            self.activeConnections.append([sshProcess, sshProcess.pid, identity, username, address, tunnels, connectionID])
+    # Reconnect a session that died off
+    def reconnectSSH(self, connection):
+        identity = connection[2]
+        username = connection[3]
+        address = connection[4]
+        tunnels = connection[5]
+        connectionID = connection[6]
+        commandList = ['ssh', '-N', '-i', identity, username + '@' + address]
+        for tunnel in tunnels:
+            commandList.append(tunnel)
+        self.printMsg('SSH Command for ' + address + ': ' + ' '.join(commandList), 1)
+        sshProcess = subprocess.Popen(commandList, stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, bufsize=0)
+        self.printMsg('Connected to SSH on host ' + address, 0)
+        self.activeConnections.append([sshProcess, sshProcess.pid, identity, username, address, tunnels, connectionID])
     # Sends a keepalive signal to each connected host
-    def keepAlive(self):
+    def printSummary(self):
+        print("\nActive Connections")
+        print("==================")
+        for activeConnection in self.activeConnections:
+            # process = activeConnection[0]
+            pid = activeConnection[1]
+            identity = activeConnection[2]
+            username = activeConnection[3]
+            address = activeConnection[4]
+            # tunnels = activeConnection[5]
+            connectionID = activeConnection[6]
+            print("\nConn. ID: %s\nHost: %s\nUser: %s\nKey: %s\nPID: %s") % (connectionID, address, username, identity, pid)
+        print('\n')
+    # Monitors the SSH processes and restarts a connection that has dropped
+    def monitorProcesses(self):
         while True:
             time.sleep(self.keepAliveInterval)
-            for sshConnection in self.activeConnections:
-                sshConnection.stdin.write("echo KEEPALIVE .\n")
-                sshConnection.stdin.write("echo END\n")
-            self.printMsg('Sent keepalive messages to all connected hosts', 1)
+            for activeConnection in self.activeConnections:
+                pid = activeConnection[1]
+                connectionID = activeConnection[6]
+                if psutil.pid_exists(pid) is True:
+                    self.printMsg('Connection with ID of ' + str(connectionID) + ' (PID ' + str(pid) + ') is still active.', 1)
+                if psutil.pid_exists(pid) is False:
+                    print('Connection with ID of ' + str(connectionID) + ' (PID ' + str(pid) + ') is no longer active.\nRestarting...')
+                    self.reconnectSSH(activeConnection)
 
 # Main module: runs the tunnel manager, then keepalive forever
 def main():
-    print('\n')
-    p = TunnelManager()
-    p.initSSH()
-    p.keepAlive()
+    tm = TunnelManager()
+    tm.initSSH()
+    tm.monitorProcesses()
 
-# Run main()
-try:
-    main()
-except KeyboardInterrupt:
-    print "Closing SSH sessions and exiting"
-    killAllSSH()
+# Run main() - only works if production is True
+# If production is false, you should be working
+# with it directly in IDLE, like so:
+#
+#   import TunnelManager as t; tm = t.TunnelManager()
+#   tm.initSSH(); tm.printSummary(); tm.monitorProcesses()
+#
+if production is True:
+    try:
+        main()
+    except KeyboardInterrupt:
+        print "Closing SSH sessions and exiting"
+        killAllSSH()
