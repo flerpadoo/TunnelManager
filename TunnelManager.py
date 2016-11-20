@@ -21,7 +21,7 @@ kill = False
 
 # Loads the config file
 CONFIG_SETTINGS = []
-configFile = '/Users/k/Documents/Companies/Crimson-Holdings/Crimson-Development-Services/TunnelManager/TunnelManager.config'
+configFile = 'TunnelManager.config'
 execfile(configFile)
 
 # Kills all SSH sessions, used for startup and keyboard interrupt (CTRL+C)
