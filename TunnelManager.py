@@ -5,21 +5,30 @@
 # it would be handled with an internal module. Thanks Bill.
 
 # Imports
-import subprocess, time, psutil
+import subprocess, time, psutil, sys, threading
 
 # Service management stuff
-outputEnabled = False
+# Verbosity enabled will allow all messages with status 1 to print
+# Standard output print messages marked with a status 0
+# Set production to False if you want to import as a library
+outputEnabled = True
 verboseOutput = False
 production = True
 
+# Other global variables
+activeConnections = None
+kill = False
+
 # Loads the config file
 CONFIG_SETTINGS = []
-configFile = 'TunnelManager.config'
+configFile = '/Users/k/Documents/Companies/Crimson-Holdings/Crimson-Development-Services/TunnelManager/TunnelManager.config'
 execfile(configFile)
 
 # Kills all SSH sessions, used for startup and keyboard interrupt (CTRL+C)
 def killAllSSH():
+    print("Killing all SSH processes - eventually this will only kill the specific PIDs of ssh sessions created using this service")
     subprocess.Popen(['killall', 'ssh'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, bufsize=0)
+    time.sleep(3)
 
 # SSH Tunnel Management Class
 class TunnelManager():
@@ -29,7 +38,7 @@ class TunnelManager():
         self.lastLogin = 'Never'
         self.currentHosts = []
         self.currentTunnels = []
-        self.keepAliveInterval = 30
+        self.keepAliveInterval = 10
         self.activeConnections = []
         self.baseCmd = ''
     # Output control module
@@ -39,6 +48,9 @@ class TunnelManager():
                 print('[+] ' + messageText)
             if verboseOutput is True and messageType == 1:
                 print('[!] ' + messageText + '\n')
+    def printTunnels(self, activeConnections):
+        for connection in activeConnections:
+            print ' '.join(connection[5])
     # Initializes an SSH connection for each host in the config file
     def initSSH(self):
         connectionID = 0
@@ -85,7 +97,8 @@ class TunnelManager():
         print('\n')
     # Monitors the SSH processes and restarts a connection that has dropped
     def monitorProcesses(self):
-        while True:
+        self.printMsg("Starting process monitor", 0)
+        while kill is False:
             time.sleep(self.keepAliveInterval)
             for activeConnection in self.activeConnections:
                 pid = activeConnection[1]
@@ -93,14 +106,60 @@ class TunnelManager():
                 if psutil.pid_exists(pid) is True:
                     self.printMsg('Connection with ID of ' + str(connectionID) + ' (PID ' + str(pid) + ') is still active.', 1)
                 if psutil.pid_exists(pid) is False:
-                    print('Connection with ID of ' + str(connectionID) + ' (PID ' + str(pid) + ') is no longer active.\nRestarting...')
+                    self.printMsg('Connection with ID of ' + str(connectionID) + ' (PID ' + str(pid) + ') is no longer active.\nRestarting...', 0)
                     self.reconnectSSH(activeConnection)
 
-# Main module: runs the tunnel manager, then keepalive forever
+class startProcessMonitor(object):
+    def __init__(self, interval=1):
+        self.interval = interval
+        thread = threading.Thread(target=self.run, args=())
+        thread.daemon = True
+        thread.start()
+    def run(self):
+        tm.monitorProcesses()
+
+# Main module: Sets the prompt string and starts the console.
 def main():
-    tm = TunnelManager()
-    tm.initSSH()
-    tm.monitorProcesses()
+    print("Starting the console...\n")
+    while 1:
+        try:
+            promptString = "TunnelManager ~> "
+            userInput = raw_input(promptString)
+            if userInput != '':
+                processInput(str(userInput))
+        except KeyboardInterrupt:
+            print('\n')
+
+# Command processing module for the console.
+def processInput(userInput):
+    if userInput == "connect":
+        global tm
+        tm = TunnelManager()
+        tm.initSSH()
+        return
+    if userInput == "summary":
+        tm.printSummary()
+        return
+    if userInput == "tunnels":
+        tm.printTunnels()
+        return
+    if userInput == "disconnect":
+        killAllSSH()
+        return
+    if userInput[0] == "monitor":
+        if userInput[1] == "start":
+            startProcessMonitor()
+        if userInput[1] == "stop":
+            global kill
+            kill = True
+        return
+    if userInput == "exit":
+        sys.exit('Goodbye!')
+    if userInput == "help":
+        print "\nThe current options are:\n\tconnect\n\tsummary\n\tmonitor\n\texit"
+    else:
+        print userInput + ": Not a command"
+        return
 
 # Run main() - only works if production is True
 # If production is false, you should be working
@@ -110,8 +169,12 @@ def main():
 #   tm.initSSH(); tm.printSummary(); tm.monitorProcesses()
 #
 if production is True:
-    try:
-        main()
-    except KeyboardInterrupt:
-        print "Closing SSH sessions and exiting"
-        killAllSSH()
+    if len(sys.argv) < 2:
+        global tm
+        tm = TunnelManager()
+        tm.initSSH()
+        tm.printSummary()
+        tm.monitorProcesses()
+    if len(sys.argv) > 2:
+        if sys.argv[2] == "/console":
+            main()
