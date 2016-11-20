@@ -13,13 +13,13 @@
 # so this is not really a priority right now.
 
 # Imports
-import urllib.request, os
+import urllib2, os
 
 # Global variables
 updateURL = "https://raw.githubusercontent.com/halphen/TunnelManager/master/TunnelManager.py"
 
 def getNewTMVersion():
-    response = urllib.request.urlopen(updateURL)
+    response = urllib2.urlopen(updateURL)
     pythonCode = response.read()
     return pythonCode
 
