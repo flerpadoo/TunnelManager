@@ -58,7 +58,7 @@ def printMsg(messageText, messageType, isLogged):
         f = open('TunnelManager.log', 'a')
         ts = time.time()
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-        f.write(st + ': ' + messageText)
+        f.write(st + ': ' + messageText + '\n')
         f.close()
     if outputEnabled is True:
         if messageType == 0:
