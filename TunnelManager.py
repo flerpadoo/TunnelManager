@@ -15,7 +15,7 @@ UpdaterVersion = '1.0'
 # Verbosity enabled will allow all messages with status 1 to print
 # Standard output print messages marked with a status 0
 # Set production to False if you want to import as a library
-isHeadless = True
+isHeadless = False
 outputEnabled = False
 verboseOutput = False
 production = True
@@ -24,7 +24,7 @@ production = True
 activeConnections = None
 refreshTunnels = True
 keepAliveInterval = 5  # in minutes
-refreshInterval = 10  # in minutes
+refreshInterval = 5  # in minutes
 keepAliveKill = False
 refresherKill = False
 
@@ -290,7 +290,7 @@ def mainHeaded():
     global tm
     tm = TunnelManager()
     tm.initSSH()
-    startTunnelRefresher()
+    tm.refreshConnections()
 
 if isHeadless is True:
     printMsg('Running in headless mode. You must append "/console" to your command if you wish to use in interactive mode.', 0, True)
