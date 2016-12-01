@@ -5,7 +5,7 @@
 # it would be handled with an internal module. Thanks Bill.
 
 # Imports
-import subprocess, time, psutil, sys, threading, os, Tkinter
+import subprocess, time, psutil, sys, threading, os, Tkinter, datetime
 
 # Version info for updater script use
 ServiceVersion = '1.0.11'
@@ -55,7 +55,8 @@ helpMSG = """The current options are as follows:
 # Output control module
 def printMsg(messageText, messageType, isLogged):
     if isLogged is True:
-        f.open('TunnelManager.log', 'a')
+        f = open('TunnelManager.log', 'a')
+        ts = time.time()
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
         f.write(st + ': ' + messageText)
         f.close()
