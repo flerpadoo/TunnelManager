@@ -52,127 +52,18 @@ helpMSG = """The current options are as follows:
     \nhelp\t\tprints out the help message (this message)
     """
 
-# SSH Tunnel Management Class
-class TunnelManager():
-    # Default properties and values
-    def __init__(self):
-        self.connected = False
-        self.lastLogin = 'Never'
-        self.currentHosts = []
-        self.currentTunnels = []
-        self.activeConnections = []
-        self.baseCmd = ''
-    # Initializes an SSH connection for each host in the config file
-    def initSSH(self):
-        connectionID = 0
-        for SSH_DICT in CONFIG_SETTINGS:
-            connectionID = connectionID + 1
-            identity = SSH_DICT['IDENTITY']
-            username = SSH_DICT['USERNAME']
-            address = SSH_DICT['ADDRESS']
-            tunnels = SSH_DICT['TUNNELS']
-            commandList = ['ssh', '-N', '-i', identity, username + '@' + address]
-            for tunnel in tunnels:
-                commandList.append(tunnel)
-            printMsg('SSH Command for ' + address + ': ' + ' '.join(commandList), 1)
-            sshProcess = subprocess.Popen(commandList, stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, bufsize=0)
-            printMsg('Connected to SSH on host ' + address, 0)
-            self.activeConnections.append([sshProcess, sshProcess.pid, identity, username, address, tunnels, connectionID])
-    # Reconnect a session that died off
-    def reconnectSSH(self, connection):
-        identity = connection[2]
-        username = connection[3]
-        address = connection[4]
-        tunnels = connection[5]
-        connectionID = connection[6]
-        commandList = ['ssh', '-N', '-i', identity, username + '@' + address]
-        for tunnel in tunnels:
-            commandList.append(tunnel)
-        printMsg('SSH Command for ' + address + ': ' + ' '.join(commandList), 1)
-        sshProcess = subprocess.Popen(commandList, stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, bufsize=0)
-        printMsg('Connected to SSH on host ' + address, 0)
-        self.activeConnections.append([sshProcess, sshProcess.pid, identity, username, address, tunnels, connectionID])
-    # Sends a keepalive signal to each connected host
-    def printSummary(self):
-        print("\nActive Connections")
-        print("==================")
-        for activeConnection in self.activeConnections:
-            # process = activeConnection[0]
-            pid = activeConnection[1]
-            identity = activeConnection[2]
-            username = activeConnection[3]
-            address = activeConnection[4]
-            # tunnels = activeConnection[5]
-            connectionID = activeConnection[6]
-            print("\nConn. ID: %s\nHost: %s\nUser: %s\nKey: %s\nPID: %s") % (connectionID, address, username, identity, pid)
-        print('\n')
-    # Prints a summary of all tunnels currently active
-    def printTunnels(self):
-        for connection in self.activeConnections:
-            address = connection[4]
-            connectionID = str(connection[6])
-            print 'Showing tunnels for connection ID ' + connectionID + ' (Host: ' + address + ')'
-            print ' '.join(connection[5]) + '\n'
-    # Monitors the SSH processes and restarts a connection that has dropped
-    def monitorProcesses(self):
-        printMsg("Starting process monitor\n", 0)
-        while keepAliveKill is False:
-            time.sleep(keepAliveInterval * 60)
-            for activeConnection in self.activeConnections:
-                pid = activeConnection[1]
-                connectionID = activeConnection[6]
-                if psutil.pid_exists(pid) is True:
-                    printMsg('Connection with ID of ' + str(connectionID) + ' (PID ' + str(pid) + ') is still active.', 1)
-                if psutil.pid_exists(pid) is False:
-                    printMsg('Connection with ID of ' + str(connectionID) + ' (PID ' + str(pid) + ') is no longer active.\nRestarting...', 0)
-                    self.reconnectSSH(activeConnection)
-    # Refreshes all SSH connections
-    def refreshConnections(self):
-        printMsg("Starting tunnel refresher", 0)
-        if refreshTunnels is True:
-            while refresherKill is False:
-                time.sleep(refreshInterval * 60)
-                printMsg('\nRefreshing Tunnels...', 0)
-                for connection in self.activeConnections:
-                    printMsg('Closing connection to host ' + str(connection[4]) + " (PID " + str(connection[1]) + ")", 0)
-                    connection[0].terminate()
-                self.activeConnections = []
-                time.sleep(2)
-                self.initSSH()
-        return
-    # Kills a process given its PID
-    def killProcess(pid):
-        printMsg('Killing connection with PID ' + pid, 0)
-        os.kill(pid)
-
 # Output control module
-def printMsg(messageText, messageType):
+def printMsg(messageText, messageType, isLogged):
+    if isLogged is True:
+        f.open('TunnelManager.log', 'a')
+        st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+        f.write(st + ': ' + messageText)
+        f.close()
     if outputEnabled is True:
         if messageType == 0:
             print('[+] ' + messageText)
         if verboseOutput is True and messageType == 1:
             print('[!] ' + messageText + '\n')
-
-# Runs the process monitoring module within the TunnelManager class.
-# Likely not needed if you are utilizing the tunnel refresher instead.
-class startProcessMonitor(object):
-    def __init__(self, interval=1):
-        self.interval = interval
-        thread = threading.Thread(target=self.run, args=())
-        thread.daemon = True
-        thread.start()
-    def run(self):
-        tm.monitorProcesses()
-
-# Runs the tunnel refresher module within the TunnelManager class
-class startTunnelRefresher(object):
-    def __init__(self, interval=1):
-        self.interval = interval
-        thread = threading.Thread(target=self.run, args=())
-        thread.daemon = True
-        thread.start()
-    def run(self):
-        tm.refreshConnections()
 
 # Command processing module for the console.
 def processInput(userInput):
@@ -205,11 +96,11 @@ def processInput(userInput):
             global verboseOutput
             if userInput[1] == "true":
                 verboseOutput = True
-                printMsg('Verbose output has been enabled', 0)
+                printMsg('Verbose output has been enabled', 0, False)
                 return
             if userInput[1] == "false":
                 verboseOutput = False
-                printMsg('Verbose output has been disabled', 0)
+                printMsg('Verbose output has been disabled', 0, False)
                 return
         if userInput[0] == "refresher":
             if userInput[1] == "start":
@@ -230,8 +121,8 @@ def processInput(userInput):
     except SystemExit:
         sys.exit('Goodbye!')
     except:
-        print "Unexpected error: ", sys.exc_info()[0]
-        printMsg(sys.exc_info()[1:], 1)
+        printMsg("Unexpected error: " + sys.exc_info()[0], 1, True)
+        printMsg(sys.exc_info()[1:], 1, True)
         return
 
 # Sets the prompt string and starts the console.
@@ -245,6 +136,120 @@ def launchConsole():
                 processInput(str(userInput))
         except KeyboardInterrupt:
             print('\n')
+
+# SSH Tunnel Management Class
+class TunnelManager():
+    # Default properties and values
+    def __init__(self):
+        self.connected = False
+        self.lastLogin = 'Never'
+        self.currentHosts = []
+        self.currentTunnels = []
+        self.activeConnections = []
+        self.baseCmd = ''
+    # Initializes an SSH connection for each host in the config file
+    def initSSH(self):
+        connectionID = 0
+        for SSH_DICT in CONFIG_SETTINGS:
+            connectionID = connectionID + 1
+            identity = SSH_DICT['IDENTITY']
+            username = SSH_DICT['USERNAME']
+            address = SSH_DICT['ADDRESS']
+            tunnels = SSH_DICT['TUNNELS']
+            commandList = ['ssh', '-N', '-i', identity, username + '@' + address]
+            for tunnel in tunnels:
+                commandList.append(tunnel)
+            printMsg('SSH Command for ' + address + ': ' + ' '.join(commandList), 1, False)
+            sshProcess = subprocess.Popen(commandList, stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, bufsize=0)
+            printMsg('Connected to SSH on host ' + address, 0, True)
+            self.activeConnections.append([sshProcess, sshProcess.pid, identity, username, address, tunnels, connectionID])
+    # Reconnect a session that died off
+    def reconnectSSH(self, connection):
+        identity = connection[2]
+        username = connection[3]
+        address = connection[4]
+        tunnels = connection[5]
+        connectionID = connection[6]
+        commandList = ['ssh', '-N', '-i', identity, username + '@' + address]
+        for tunnel in tunnels:
+            commandList.append(tunnel)
+        printMsg('SSH Command for ' + address + ': ' + ' '.join(commandList), 1)
+        sshProcess = subprocess.Popen(commandList, stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, bufsize=0)
+        printMsg('Connected to SSH on host ' + address, 0, True)
+        self.activeConnections.append([sshProcess, sshProcess.pid, identity, username, address, tunnels, connectionID])
+    # Sends a keepalive signal to each connected host
+    def printSummary(self):
+        print("\nActive Connections")
+        print("==================")
+        for activeConnection in self.activeConnections:
+            # process = activeConnection[0]
+            pid = activeConnection[1]
+            identity = activeConnection[2]
+            username = activeConnection[3]
+            address = activeConnection[4]
+            # tunnels = activeConnection[5]
+            connectionID = activeConnection[6]
+            print("\nConn. ID: %s\nHost: %s\nUser: %s\nKey: %s\nPID: %s") % (connectionID, address, username, identity, pid)
+        print('\n')
+    # Prints a summary of all tunnels currently active
+    def printTunnels(self):
+        for connection in self.activeConnections:
+            address = connection[4]
+            connectionID = str(connection[6])
+            print 'Showing tunnels for connection ID ' + connectionID + ' (Host: ' + address + ')'
+            print ' '.join(connection[5]) + '\n'
+    # Monitors the SSH processes and restarts a connection that has dropped
+    def monitorProcesses(self):
+        printMsg("Starting process monitor\n", 0, True)
+        while keepAliveKill is False:
+            time.sleep(keepAliveInterval * 60)
+            for activeConnection in self.activeConnections:
+                pid = activeConnection[1]
+                connectionID = activeConnection[6]
+                if psutil.pid_exists(pid) is True:
+                    printMsg('Connection with ID of ' + str(connectionID) + ' (PID ' + str(pid) + ') is still active.', 1, False)
+                if psutil.pid_exists(pid) is False:
+                    printMsg('Connection with ID of ' + str(connectionID) + ' (PID ' + str(pid) + ') is no longer active.\nRestarting...', 0, False)
+                    self.reconnectSSH(activeConnection)
+    # Refreshes all SSH connections
+    def refreshConnections(self):
+        printMsg("Starting tunnel refresher", 0, True)
+        if refreshTunnels is True:
+            while refresherKill is False:
+                time.sleep(refreshInterval * 60)
+                printMsg('\nRefreshing Tunnels...', 0, True)
+                for connection in self.activeConnections:
+                    printMsg('Closing connection to host ' + str(connection[4]) + " (PID " + str(connection[1]) + ")", 0, True)
+                    connection[0].terminate()
+                self.activeConnections = []
+                time.sleep(2)
+                self.initSSH()
+        return
+    # Kills a process given its PID
+    def killProcess(pid):
+        printMsg('Killing connection with PID ' + pid, 0, True)
+        os.kill(pid)
+
+# Runs the process monitoring module within the TunnelManager class.
+# Likely not needed if you are utilizing the tunnel refresher instead.
+class startProcessMonitor(object):
+    def __init__(self, interval=1):
+        self.interval = interval
+        thread = threading.Thread(target=self.run, args=())
+        thread.daemon = True
+        thread.start()
+    def run(self):
+        tm.monitorProcesses()
+
+# Runs the tunnel refresher module within the TunnelManager class
+class startTunnelRefresher(object):
+    def __init__(self, interval=1):
+        self.interval = interval
+        thread = threading.Thread(target=self.run, args=())
+        thread.daemon = True
+        thread.start()
+    def run(self):
+        tm.refreshConnections()
 
 # Main modules - only work if production is True.
 # If production is false, you're probably working
@@ -287,7 +292,7 @@ def mainHeaded():
     startTunnelRefresher()
 
 if isHeadless is True:
-    printMsg('Running in headless mode. You must append "/console" to your command if you wish to use in interactive mode.', 0)
+    printMsg('Running in headless mode. You must append "/console" to your command if you wish to use in interactive mode.', 0, True)
     mainHeadless()
 if isHeadless is False:
     rootWindow = Tkinter.Tk()
