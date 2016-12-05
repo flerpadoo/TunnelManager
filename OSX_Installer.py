@@ -7,7 +7,11 @@
 # the TunnelManager solution runs at startup.
 
 # Imports
-import datetime, os, sys, time, urllib2
+import datetime, getpass, os, sys, time, urllib2
+
+# Checks to see if user is running with sudo
+if getpass.getuser() != 'root':
+    sys.exit('You must run this script with sudo (but do NOT run in a root prompt) ...')
 
 # Global variables
 userName = os.getenv("SUDO_USER")
@@ -25,7 +29,7 @@ plistTemplate = """<?xml version="1.0" encoding="UTF-8"?>
   <string>com.%s.%s</string>
 
   <key>Program</key>
-  <string>%s%s.py</string>
+  <string>%slauncher.sh</string>
 
   <key>RunAtLoad</key>
   <true/>
@@ -36,15 +40,15 @@ plistTemplate = """<?xml version="1.0" encoding="UTF-8"?>
   <key>StandardOutPath</key>
   <string>/tmp/com.%s.%s.out</string>
 </dict>
-</plist>""" % (userName, appName, installPath, appName, userName, appName, userName, appName)
+</plist>""" % (userName, appName, installPath, userName, appName, userName, appName)
 
 # OSX bash script that sets permissions and launch control
 bashScript = """
 sudo chown -R %s /Applications/TunnelManager
 sudo chmod 600 /Library/LaunchAgents/com.%s.%s.plist
 sudo chown root:wheel /Library/LaunchAgents/com.%s.%s.plist
-chmod +x %s%s.py
-sudo launchctl load /Library/LaunchAgents/com.%s.%s.plist""" % (userName, userName, appName, userName, appName, installPath, appName, userName, appName)
+chmod +x %slauncher.sh
+sudo launchctl load /Library/LaunchAgents/com.%s.%s.plist""" % (userName, userName, appName, userName, appName, installPath, userName, appName)
 
 # Downloads all files associated with TunnelManager and a dictionary with the file contents
 def fileDownloader():
