@@ -279,8 +279,7 @@ def mainHeadless():
             global tm
             tm = TunnelManager()
             tm.initSSH()
-            # tm.printSummary()
-            startTunnelRefresher()
+            tm.refreshConnections()
         if len(sys.argv) >= 2:
             if sys.argv[1] == "/console":
                 launchConsole()
