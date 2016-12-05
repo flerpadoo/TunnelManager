@@ -54,7 +54,7 @@ helpMSG = """The current options are as follows:
 # Output control module
 def printMsg(messageText, messageType, isLogged):
     if isLogged is True:
-        f = open('TunnelManager.log', 'a')
+        f = open('/Applications/TunnelManager/TunnelManager.log', 'a')
         ts = time.time()
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
         f.write(st + ': ' + messageText + '\n')
@@ -279,7 +279,7 @@ def mainHeadless():
             global tm
             tm = TunnelManager()
             tm.initSSH()
-            tm.printSummary()
+            # tm.printSummary()
             startTunnelRefresher()
         if len(sys.argv) >= 2:
             if sys.argv[1] == "/console":
