@@ -29,7 +29,7 @@ refresherKill = False
 
 # Loads the config file
 CONFIG_SETTINGS = []
-configFile = 'TunnelManager.config'
+configFile = '/Applications/TunnelManager/TunnelManager.config'
 execfile(configFile)
 
 # The help message
