@@ -9,13 +9,12 @@ import subprocess, time, psutil, sys, threading, os, Tkinter, datetime
 
 # Version info for updater script use
 ServiceVersion = '1.0.11'
-UpdaterVersion = '1.0'
 
 # Service management stuff
 # Verbosity enabled will allow all messages with status 1 to print
 # Standard output print messages marked with a status 0
 # Set production to False if you want to import as a library
-isHeadless = False
+isHeadless = True
 outputEnabled = False
 verboseOutput = False
 production = True
@@ -24,7 +23,7 @@ production = True
 activeConnections = None
 refreshTunnels = True
 keepAliveInterval = 5  # in minutes
-refreshInterval = 5  # in minutes
+refreshInterval = 1  # in minutes
 keepAliveKill = False
 refresherKill = False
 
