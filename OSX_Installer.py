@@ -47,8 +47,7 @@ bashScript = """
 sudo chown -R %s /Applications/TunnelManager
 sudo chmod 600 /Library/LaunchAgents/com.%s.%s.plist
 sudo chown root:wheel /Library/LaunchAgents/com.%s.%s.plist
-chmod +x %slauncher.sh
-sudo launchctl load /Library/LaunchAgents/com.%s.%s.plist""" % (userName, userName, appName, userName, appName, installPath, userName, appName)
+sudo launchctl load /Library/LaunchAgents/com.%s.%s.plist""" % (userName, userName, appName, userName, appName, userName, appName)
 
 # Downloads all files associated with TunnelManager and a dictionary with the file contents
 def fileDownloader():
