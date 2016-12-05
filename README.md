@@ -1,5 +1,7 @@
+** NOTE: This is currently tailored for OSX while most of the core features are implemented, and the UI is started. The end goal is to be completely cross-platform, and capable of of being fully integrated into other solutions.
+
 # TunnelManager
-A python-based SSH tunnel management service for those who refuse to leave all of their services accessible to everyone on the Internet, but don't want to use VPNs.
+A python-based SSH tunnel management service for those who refuse to leave all of their services accessible to everyone on the Internet, but don't want to use VPNs. 
 
 ## The Config File
 The configuration file for TunnelManager is really quite simple: It is merely a list of dictionaries. Each dictionary contains four pieces of information:
