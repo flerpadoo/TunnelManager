@@ -13,7 +13,7 @@ The configuration file for TunnelManager is really quite simple: It is merely a 
 
 TunnelManager uses this list of dictionaries, and connects to each of the host addresses using their respective username and identity files provided in the config file, and establishes the SSH tunnels you specify in the TUNNELS key. Here is an example of a config file with a single host and only a few tunnels:
 
-```python
+```
 CONFIG_SETTINGS = [
     {   # My Jumpbox
         "ADDRESS": "jumpbox.yourdomain.com",
@@ -27,7 +27,7 @@ CONFIG_SETTINGS = [
 ## Using in IDLE)
 If you wish to use the service as a library, and import it into your own project, or wish to run it from IDLE to act as a console, spawn multiple TunnelManager classes using different config files, then simply change the 'production' variable in TunnelManager.py to "False" - that will prevent any code from running and just let you access the modules once imported
 
-```python
+```
 import TunnelManager as t
 t = TunnelManager()
 t.initSSH()
@@ -38,13 +38,13 @@ t.startTunnelRefresher()
 ### Using the Console
 If production is enabled, you have two options: headed, and headless (UI, or no UI). As of right now, the UI really only has a button to connect, but the console is a bit more extensive. To access the console, simply ensure that the 'production' variable is set to 'True' and that the 'isHeadless' variable is set to 'True'. Then you can run the following command:
 
-```bash
-~# python TunnelManager.py --console
+```
+# python TunnelManager.py --console
 ```
 
 You will then be greeted with the following prompt:
 
-```bash
+```
 [+] Running in headless mode.
 Starting the console...
 
@@ -53,7 +53,7 @@ TunnelManager ~>
 
 The help message details all of the available functions within the console:
 
-```bash
+```
 TunnelManager ~> help
 The current options are as follows:
 
@@ -85,7 +85,7 @@ help            prints out the help message (this message)
 ## Running the TunnelManager straight-up, with no console
 If you omit the '--console' flag with production enabled and isHeadless set to True, then you should see the following when launching the TunnelManager.py script:
 
-```bash
+```
 $ python TunnelManager.py
 [+] Running in headless mode.
 [+] You must use the '--console' flag if you wish to use this service interactively.
