@@ -24,10 +24,74 @@ CONFIG_SETTINGS = [
 ]
 ```
 
-## Usage (IDLE and Command Line)
+## Using in IDLE)
+If you wish to use the service as a library, and import it into your own project, or wish to run it from IDLE to act as a console, spawn multiple TunnelManager classes using different config files, then simply change the 'production' variable in TunnelManager.py to "False" - that will prevent any code from running and just let you access the modules once imported
 
-    p = TunnelManager()
-    p.initSSH()
-    p.keepAlive()
+```python
+import TunnelManager as t
+t = TunnelManager()
+t.initSSH()
+t.printSummary()
+t.startTunnelRefresher()
+```
 
-### This readme is still a work in progress...
+### Using the Console
+If production is enabled, you have two options: headed, and headless (UI, or no UI). As of right now, the UI really only has a button to connect, but the console is a bit more extensive. To access the console, simply ensure that the 'production' variable is set to 'True' and that the 'isHeadless' variable is set to 'True'. Then you can run the following command:
+
+```bash
+~# python TunnelManager.py --console
+```
+
+You will then be greeted with the following prompt:
+
+```bash
+[+] Running in headless mode.
+Starting the console...
+
+TunnelManager ~>
+```
+
+The help message details all of the available functions within the console:
+
+```bash
+TunnelManager ~> help
+The current options are as follows:
+
+connect         connects to all of the hosts in your config file, and establishes all respective tunnels
+
+summary         prints the connection summary, which shows information on all active connections
+
+tunnels         lists out all of the active tunnels being managed by this service
+
+disconnectall   disconnects all active connections and their respective tunnels
+
+monitor         options for the process monitoring module, which will monitor the PID of ssh connections and reconnect if needed
+      start             starts the process monitor in a backgrounded thread
+      stop              stops the process monitor, but does not close any connections
+
+refresher       options for the tunnel refresher module, which reconnects all active SSH sessions
+      start             starts the refresher module in a background thread
+      stop              stops the refresher module
+
+verbose         options to enable verbose output
+      true              enables verbose output, allowing the user to see actual SSH commands, full errors, etc
+      false             the default option - disables verbose output for a cleaner console experience
+
+exit            close all connections, exit the console, and shut down the tunnel manager
+
+help            prints out the help message (this message)
+```
+
+## Running the TunnelManager straight-up, with no console
+If you omit the '--console' flag with production enabled and isHeadless set to True, then you should see the following when launching the TunnelManager.py script:
+
+```bash
+$ python TunnelManager.py
+[+] Running in headless mode.
+[+] You must use the '--console' flag if you wish to use this service interactively.
+[+] Initiating the SSH connections and starting the refresher service.
+[+] Connected to SSH on host ssh.test.com
+[+] Connected to SSH on host filter.website.org
+[+] Connected to SSH on host jumpbox.yourcompany.net
+[+] Starting tunnel refresher
+```
