@@ -3,7 +3,7 @@
 # TunnelManager
 A python-based SSH tunnel management service for those who refuse to leave all of their services accessible to everyone on the Internet, but don't want to use VPNs. 
 
-## The Config File
+### The Config File
 The configuration file for TunnelManager is really quite simple: It is merely a list of dictionaries. Each dictionary contains four pieces of information:
 
 + ADDRESS
@@ -24,7 +24,7 @@ CONFIG_SETTINGS = [
 ]
 ```
 
-## Using in IDLE)
+### Using in IDLE
 If you wish to use the service as a library, and import it into your own project, or wish to run it from IDLE to act as a console, spawn multiple TunnelManager classes using different config files, then simply change the 'production' variable in TunnelManager.py to "False" - that will prevent any code from running and just let you access the modules once imported
 
 ```
@@ -82,7 +82,7 @@ exit            close all connections, exit the console, and shut down the tunne
 help            prints out the help message (this message)
 ```
 
-## Running the TunnelManager straight-up, with no console
+### Running the TunnelManager straight-up, with no console
 If you omit the '--console' flag with production enabled and isHeadless set to True, then you should see the following when launching the TunnelManager.py script:
 
 ```
