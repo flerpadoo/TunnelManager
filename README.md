@@ -1,4 +1,4 @@
-** NOTE: This is currently tailored for OSX while most of the core features are implemented, and the UI is started. The end goal is to be completely cross-platform, and capable of of being fully integrated into other solutions.
+** NOTE: This is currently tailored for Unix/Linux while most of the core features are implemented, and the UI is started. The end goal is to be completely cross-platform, and capable of of being fully integrated into other solutions. Presently, the only thing preventing this from being cross-platform is that it uses subprocess to control the ssh client at the cli - we will be moving over to paramiko or similar soon.
 
 # TunnelManager
 A python-based SSH tunnel management service for those who refuse to leave all of their services accessible to everyone on the Internet, but don't want to use VPNs. 
