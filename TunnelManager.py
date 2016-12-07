@@ -14,16 +14,15 @@ ServiceVersion = '1.0.11'
 # Verbosity enabled will allow all messages with status 1 to print
 # Standard output print messages marked with a status 0
 # Set production to False if you want to import as a library
-isHeadless = True
+isHeadless = False
 outputEnabled = False
 verboseOutput = False
 production = True
 
 # Other global variables
 activeConnections = None
-refreshTunnels = True
 keepAliveInterval = 5  # in minutes
-refreshInterval = 1  # in minutes
+refreshInterval = 5  # in minutes
 keepAliveKill = False
 refresherKill = False
 
@@ -214,17 +213,15 @@ class TunnelManager():
     # Refreshes all SSH connections
     def refreshConnections(self):
         printMsg("Starting tunnel refresher", 0, True)
-        if refreshTunnels is True:
-            while refresherKill is False:
-                time.sleep(refreshInterval * 60)
-                printMsg('\nRefreshing Tunnels...', 0, True)
-                for connection in self.activeConnections:
-                    printMsg('Closing connection to host ' + str(connection[4]) + " (PID " + str(connection[1]) + ")", 0, True)
-                    connection[0].terminate()
-                self.activeConnections = []
-                time.sleep(2)
-                self.initSSH()
-        return
+        while refresherKill is False:
+            time.sleep(refreshInterval * 60)
+            printMsg('Refreshing Tunnels...', 0, True)
+            for connection in self.activeConnections:
+                printMsg('Closing connection to host ' + str(connection[4]) + " (PID " + str(connection[1]) + ")", 0, True)
+                connection[0].terminate()
+            self.activeConnections = []
+            time.sleep(2)
+            self.initSSH()
     # Kills a process given its PID
     def killProcess(pid):
         printMsg('Killing connection with PID ' + pid, 0, True)
@@ -288,7 +285,8 @@ def mainHeaded():
     global tm
     tm = TunnelManager()
     tm.initSSH()
-    tm.refreshConnections()
+    startTunnelRefresher()
+    b.config(text="Connected")
 
 if isHeadless is True:
     printMsg('Running in headless mode. You must append "/console" to your command if you wish to use in interactive mode.', 0, True)
@@ -296,5 +294,10 @@ if isHeadless is True:
 if isHeadless is False:
     rootWindow = Tkinter.Tk()
     rootWindow.title("TunnelManager " + ServiceVersion)
-    mainHeaded()
+    rootWindow.resizable(width=False, height=False)
+    rootWindow.geometry('{}x{}'.format(500, 200))
+    btn_text = Tkinter.StringVar()
+    b = Tkinter.Button(rootWindow, command=lambda: mainHeaded(), text=btn_text)
+    b.pack()
+    b.config(text="Connect")
     rootWindow.mainloop()
